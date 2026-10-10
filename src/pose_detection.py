@@ -26,6 +26,7 @@ def draw_the_landmarks(images,result):
             if False else vision.PoseLandmarksConnections.POSE_LANDMARKS,
             landmark_drawing_spec=drawing_styles.get_default_pose_landmarks_style()
             )
+         draw_tarso_box(annotated_image,pose_landmarks)
     return annotated_image        
 
 
@@ -38,13 +39,31 @@ VisionRunningMode=mp.tasks.vision.RunningMode
 #<---- Print the LandMarks X,Y,Z ----->
 landmarks=None
 def print_result(result:PoseLandmarkerResult,image:mp.Image,timestamp_mp:int):
-    global landmarks
+    global landmarks 
     landmarks=result
     if result.pose_landmarks:
         print("Pose detected",len(result.pose_landmarks)) 
     else :
         print("No Pose detected")   
-    return result      
+    return result  
+#<---Draw tarsobox--->
+def draw_tarso_box(image,landmarks):
+       h,w=image.shape[:2]  
+       tarso_index=[11,12,23,24]
+       try :
+        tarso_cordinates=[(int(landmarks[i].x*w),int(landmarks[i].y*h)) for i in tarso_index]
+       except (IndexError,AttributeError):
+        return  
+       x_points=[p[0] for p in tarso_cordinates]
+       y_points=[p[1] for p in tarso_cordinates]
+       padding=20
+       x_min=max(0,min(x_points)-padding)
+       x_max=min(w-1,max(x_points)+padding)
+       y_min=max(0,min(y_points)-padding)
+       y_max=min(h-1,max(y_points)+padding) 
+       cv2.rectangle(image,(x_min,y_min),(x_max,y_max),(0,255,0),2)
+       cv2.putText(image,"Tarso",(x_min,y_min-8),cv2.FONT_HERSHEY_COMPLEX,0.6,(0,255,0),2)
+#<---Model calling--->        
 options=PoseLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=str(MODEL)),
         running_mode=VisionRunningMode.LIVE_STREAM,
@@ -54,18 +73,23 @@ options=PoseLandmarkerOptions(
         min_tracking_confidence=0.5,
         output_segmentation_masks=True,
         result_callback=print_result,  
-    )   
+    ) 
+
 #<-----Image Capture----->      
 cap =None
 for camera_index in range(5):
     temp_cap=cv2.VideoCapture(camera_index)
     if temp_cap.isOpened():
+        temp_cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
+        temp_cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
         cap=temp_cap
         print(f"Cemera is Working!!")
         break
     temp_cap.release()
 if cap is None:
      raise IOError("No cemera found")
+cv2.namedWindow("webcam",cv2.WINDOW_NORMAL)
+cv2.resizeWindow("webcam",1280,720)     
 fps=cap.get(cv2.CAP_PROP_FPS)
 if fps <=0:
    fps=30
@@ -86,7 +110,7 @@ try :
        last_timestamp_ms = timestamp_ms
        landmarker.detect_async(mp_image,timestamp_ms)
        annotated_image=draw_the_landmarks(image_rgb,landmarks)
-       cv2.imshow('wecam feed',cv2.cvtColor(annotated_image,cv2.COLOR_RGB2BGR))
+       cv2.imshow('webcam',cv2.cvtColor(annotated_image,cv2.COLOR_RGB2BGR))
        if cv2.waitKey(1)&0xFF==ord("q"): 
            break
        frame_index+=1 
