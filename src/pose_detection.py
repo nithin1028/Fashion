@@ -75,45 +75,46 @@ options=PoseLandmarkerOptions(
         result_callback=print_result,  
     ) 
 
-#<-----Image Capture----->      
-cap =None
-for camera_index in range(5):
-    temp_cap=cv2.VideoCapture(camera_index)
-    if temp_cap.isOpened():
-        temp_cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
-        temp_cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
-        cap=temp_cap
-        print(f"Cemera is Working!!")
-        break
-    temp_cap.release()
-if cap is None:
-     raise IOError("No cemera found")
-cv2.namedWindow("webcam",cv2.WINDOW_NORMAL)
-cv2.resizeWindow("webcam",1280,720)     
-fps=cap.get(cv2.CAP_PROP_FPS)
-if fps <=0:
-   fps=30
-frame_index=0 
-last_timestamp_ms=-1
-try :      
-  with PoseLandmarker.create_from_options(options) as landmarker:
-    while True:
-       sucess,frame=cap.read()
-       if not sucess :
-           raise IOError("Cemera not sending data")
-       image_rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-       mp_image=mp.Image(image_format=mp.ImageFormat.SRGB,data=image_rgb)
-       timestamp_ms = max(
-       int((frame_index * 1000) / fps),
-       last_timestamp_ms + 1
-       )
-       last_timestamp_ms = timestamp_ms
-       landmarker.detect_async(mp_image,timestamp_ms)
-       annotated_image=draw_the_landmarks(image_rgb,landmarks)
-       cv2.imshow('webcam',cv2.cvtColor(annotated_image,cv2.COLOR_RGB2BGR))
-       if cv2.waitKey(1)&0xFF==ord("q"): 
-           break
-       frame_index+=1 
-finally:       
- cap.release()
- cv2.destroyAllWindows()           
+#<-----Image Capture-----> 
+if __name__=='__main__'  :   
+    cap =None
+    for camera_index in range(5):
+        temp_cap=cv2.VideoCapture(camera_index)
+        if temp_cap.isOpened():
+            temp_cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
+            temp_cap.set(cv2.CAP_PROP_FRAME_HEIGHT,720)
+            cap=temp_cap
+            print(f"Cemera is Working!!")
+            break
+        temp_cap.release()
+    if cap is None:
+        raise IOError("No cemera found")
+    cv2.namedWindow("webcam",cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("webcam",1280,720)     
+    fps=cap.get(cv2.CAP_PROP_FPS)
+    if fps <=0:
+        fps=30
+    frame_index=0 
+    last_timestamp_ms=-1
+    try :      
+        with PoseLandmarker.create_from_options(options) as landmarker:
+            while True:
+                sucess,frame=cap.read()
+                if not sucess :
+                    raise IOError("Cemera not sending data")
+                image_rgb=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+                mp_image=mp.Image(image_format=mp.ImageFormat.SRGB,data=image_rgb)
+                timestamp_ms = max(
+                int((frame_index * 1000) / fps),
+                last_timestamp_ms + 1
+                )
+                last_timestamp_ms = timestamp_ms
+                landmarker.detect_async(mp_image,timestamp_ms)
+                annotated_image=draw_the_landmarks(image_rgb,landmarks)
+                cv2.imshow('webcam',cv2.cvtColor(annotated_image,cv2.COLOR_RGB2BGR))
+                if cv2.waitKey(1)&0xFF==ord("q"): 
+                    break
+                frame_index+=1 
+    finally:       
+        cap.release()
+        cv2.destroyAllWindows()           

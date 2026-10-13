@@ -87,40 +87,42 @@ options=FaceLandmarkerOptions(
         output_facial_transformation_matrixes=True,
         result_callback=print_result  
 )
-cap=cv2.VideoCapture(0)
-if  not cap.isOpened():
-        raise IOError("Cemara is not opend")       
-fps=cap.get(cv2.CAP_PROP_FPS) 
-if fps<=0:
-    fps=30
-frame_index=0
-last_timestamp_ms=-1              
-try :
-   with FaceLandmarker.create_from_options(options) as  face_landmarks:
-     while True:  
-        sucess,frame=cap.read()
-        if not sucess:
-             raise IOError("Cemera not working")    
-        rgb_image=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)  
-        mp_image=mp.Image(image_format=mp.ImageFormat.SRGB,data=rgb_image)
-        timestamp_ms=int(max((int(frame_index*1000)/fps),last_timestamp_ms+1))
-        last_timestamp_ms=timestamp_ms
-        face_landmarks.detect_async(mp_image,timestamp_ms)
-        with lock: 
-          result=landmark
-          display=frame   
-          if result is not None:
-                display=draw_facial_landmarks(frame,result)   
-          cv2.imshow("wecam",display) 
-          key=cv2.waitKey(1)&0xFF 
-          if key==ord('q'):
-                break 
-          if key ==ord('b') and result is not None and result.face_blendshapes:
-                plot_face_blendshape_bar_graph(landmark.face_blendshapes[0])
-     frame_index+=1
-finally:
-    cap.release()
-    cv2.destroyAllWindows()    
+
+if __name__=='__main__':
+        cap=cv2.VideoCapture(0)
+        if  not cap.isOpened():
+                raise IOError("Cemara is not opend")       
+        fps=cap.get(cv2.CAP_PROP_FPS) 
+        if fps<=0:
+          fps=30
+        frame_index=0
+        last_timestamp_ms=-1              
+        try :
+                with FaceLandmarker.create_from_options(options) as  face_landmarks:
+                        while True:  
+                                sucess,frame=cap.read()
+                                if not sucess:
+                                 raise IOError("Cemera not working")    
+                                rgb_image=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)  
+                                mp_image=mp.Image(image_format=mp.ImageFormat.SRGB,data=rgb_image)
+                                timestamp_ms=int(max((int(frame_index*1000)/fps),last_timestamp_ms+1))
+                                last_timestamp_ms=timestamp_ms
+                                face_landmarks.detect_async(mp_image,timestamp_ms)
+                                with lock: 
+                                        result=landmark
+                                        display=frame   
+                                        if result is not None:
+                                                display=draw_facial_landmarks(frame,result)   
+                                        cv2.imshow("wecam",display) 
+                                        key=cv2.waitKey(1)&0xFF 
+                                        if key==ord('q'):
+                                                break 
+                                        if key ==ord('b') and result is not None and result.face_blendshapes:
+                                                plot_face_blendshape_bar_graph(landmark.face_blendshapes[0])
+                frame_index+=1
+        finally:
+                cap.release()
+                cv2.destroyAllWindows()    
 
 
 
