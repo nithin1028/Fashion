@@ -67,7 +67,7 @@ if fps<=0:
 frame_index=0
 last_timestamp_ms=-1
 cv2.namedWindow("Face and Pose Detection:",cv2.WINDOW_NORMAL) 
-cv2.resizeWindow("Face and Pose Detection:",1280,720)
+cv2.resizeWindow("Face and Pose Detection:",1280,1000)
 try:
   with FaceLandmarker.create_from_options(face_model) as face_options,\
        PoseLandmarker.create_from_options(pose_model) as pose_options:
