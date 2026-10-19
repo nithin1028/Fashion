@@ -18,8 +18,7 @@ from iglovikov_helper_functions.utils.image_utils import load_rgb,pad_to_size,un
 from torch.utils.data import Dataset
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
-
-
+import numpy as np
 def get_args():
     parser=argparse.ArgumentParser()
     arg=parser.add_argument
@@ -96,5 +95,25 @@ def predict(dataloder,model,hparams,device):
     if hparams["local_rank"]==0:
        loader=tqdm(dataloder)
     else :
-       loader=loader
-    with torch.no_grad()                   
+       loader=dataloder
+    with torch.no_grad():
+        for batch in loader:
+            torched_images=batch['torched_image']
+            if hparams['fp16']:
+                torched_images=torched_images.half()
+            image_paths=batch["image_paths"]
+            pads=batch["pads"]
+            height=batch["original_height"]
+            width=batch["original_width"]
+            batch_size=torched_images.shape
+            predection=model(torched_images.to(device)) 
+            for batch_id in range(batch_size):
+                file_id=Path(image_paths[batch_id]).stem
+                folder_name=Path(image_paths[batch_id]).parent.name
+                mask=(predection[batch_id][0].cpu().numpy()>0).astype(np.unit8)*255
+                mask=unpad_from_size(pads,image=mask)["image"]
+                mask=cv2.resize(mask,(width[batch_id].item()),height[batch_id].item(),interpolation=cv2.INTER_NEAREST)
+                (hparams["output_mask_path"]/folder_name).mkdir(exist_ok=True,parents=True)   
+                cv2.imwrite(str(hparams["output_mask_path"]/folder_name/f"{file_id}.png"),mask) 
+if __name__=="__main__":
+    main()
