@@ -7,10 +7,12 @@ import albumentations as albu
 import torch
 import cv2
 import os 
+import matplotlib.pyplot as plt 
 model=create_model("Unet_2020-10-30")
 model.eval()
 image=load_rgb(os.path.join(os.path.dirname(__file__),"Bg.jpeg"))
 imshow(image)
+plt.show()
 transform=albu.Compose([albu.Normalize(p=1)],p=1)
 padded_image,pad=pad(image,factor=32,border=cv2.BORDER_CONSTANT)
 x=transform(image=padded_image)["image"]
@@ -20,6 +22,9 @@ with torch.no_grad():
 mask=(prediction>0).cpu().numpy().astype(np.uint8)
 mask=unpad(mask,pad)    
 imshow(mask)
+plt.show()
 dst=cv2.addWeighted(image,1,(cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)*(0,255,0)).astype(np.uint8),0.5,0)
 imshow(dst)
-imshow(np.hstack([image,cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)*255,dst]))
+plt.show()
+imshow(np.hstack([image,cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)*255,dst])) 
+plt.show()
