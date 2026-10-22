@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd 
 from PIL import  Image 
 from tqdm import tqdm
-
 def rle2mask(rle: str, shape):
     """Convert RLE encoded string to binary mask."""
     width, height = shape

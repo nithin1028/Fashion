@@ -6,3 +6,5 @@ src/__pycache__
 processed
 train
 train.csv 
+processed
+wandb

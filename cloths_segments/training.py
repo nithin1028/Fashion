@@ -1,8 +1,7 @@
-from torch.utils.tensorboard.summary import hparams
-from pytorch_lightning.trainer.connectors.logger_connector import result
-from cv2 import sepFilter2D
 import argparse
-import os 
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from pathlib import Path
 from typing import Dict
 import pytorch_lightning as pl 
@@ -29,8 +28,13 @@ def get_args():
 class SegmentPeople(pl.LightningModule):
     def __init__(self,hparams):
         super().__init__()
-        self.hparams=hparams 
+        self.save_hyperparameters(hparams)
         self.model=object_from_dict(self.hparams["model"])
+        self.losses=[
+               ("jaccard",0.1,JaccardLoss(mode="binary",from_logits=True)),
+               ("focal",0.9,BinaryFocalLoss())
+        ]
+        self.validation_outputs=[]
         if "resume_form_checkpoint" in self.hparams:
             correlation:Dict[str,str]={"model.":""}
             state_dict=state_dict_from_disk(
@@ -38,17 +42,13 @@ class SegmentPeople(pl.LightningModule):
                    rename_in_layers=correlation
             )   
             self.model.load_state_dict(state_dict)
-            self.losses=[
-                   ("jaccard",0.1,JaccardLoss(mode="binary",from_logits=True)),
-                   ("focal",0.9,BinaryFocalLoss())
-            ]
     def forward(self,batch:torch.Tensor)->torch.Tensor:
         return self.model(batch)  
     def setup(self,stage=0):
         samples=get_samples(image_path,mask_path)
         num_train=int((1-self.hparams["val_split"])*len(samples)) 
         self.train_samples=samples[:num_train]
-        self.val_samples=samples[num_train]
+        self.val_samples=samples[num_train:]
         print("Length train_samples=",len(self.train_samples))
         print("Length of val_samples=",len(self.val_samples))                 
     def train_dataloader(self):
@@ -58,7 +58,7 @@ class SegmentPeople(pl.LightningModule):
         else :
             epoch_length=self.hparams["train_parameters"]["epoch_length"]
         result=DataLoader(
-                SegmenatationDataset(self.train_sample,train_aug,epoch_length) ,
+                SegmenatationDataset(self.train_samples,train_aug,epoch_length) ,
                 batch_size=self.hparams["train_parameters"]["batch_size"] ,
                 num_workers=self.hparams["num_workers"],
                 shuffle=True,
@@ -69,25 +69,25 @@ class SegmentPeople(pl.LightningModule):
         print("Train Dataloder:",len(result))
         return result
     def val_dataloader(self):
-        val_agu=from_dict(self.hparams["train_agu"])
+        val_aug=from_dict(self.hparams["val_aug"])
         result=DataLoader(
-               SegmenatationDataset(self.val_samples,val_agu,lenght=None),
-               batch_sampler=self.hparams["val_parameters"]["batch_size"],
+               SegmenatationDataset(self.val_samples,val_aug,length=None),
+               batch_size=self.hparams["val_parameters"]["batch_size"],
                shuffle=True,
                pin_memory=True,
                drop_last=True
         ) 
         print("Train dataloder=",len(result))
         return result  
-    def configure_optimizer(self):
+    def configure_optimizers(self):
         optimiser=object_from_dict(
-            self.hparams["optimiser"],
+            self.hparams["optimizer"],
             params=[x for x in self.model.parameters() if x.requires_grad]
         
         ) 
         scheduler=object_from_dict(
                 self.hparams["scheduler"],
-                optimiser=optimiser
+                optimizer=optimiser
         )
         self.optimiser=[optimiser]
         return self.optimiser,[scheduler]
@@ -115,29 +115,29 @@ class SegmentPeople(pl.LightningModule):
         for loss_name,_,loss in self.losses:
             result[f"val_mask_{loss_name}"]=loss(logits,mask)
         result["val_iou"]=binary_mean_union_intersection(logits,mask)    
+        self.validation_outputs.append(result)
         return result
-    def validation_epoch_end(self,outputs):
+    def on_validation_epoch_end(self):
         logs={"epoch":self.trainer.current_epoch}  
-        avg_val_iou=find_average(outputs,"val_iou")
-        logs["val_iou"]=avg_val_iou
-        return {"val_iou":avg_val_iou,"log":logs}
-    def main():
-        args=get_args()
-        with open(args.config_path) as f :
-            hparams=yaml.load(f,Loader=yaml.SafeLoader)
-        pipeline=SegmentPeople(hparams)
-        Path(hparams["checkpoint_callback"]["filepath"]).mkdir(exist_ok=True,parents=True)
-        trainer =object_from_dict(
-                 hparams["trainer"],
-                 logger=WandbLogger(hparams["experiment_name"]),
-                 checkpoint_callback=object_from_dict(
-                      hparams["checkpoint_callback"]
-                 )
-                 
-        )
-        trainer.fit(pipeline)
-    if __name__=="__main__":
-        main()    
+        avg_val_iou=find_average(self.validation_outputs,"val_iou")
+        self.log("val_iou",avg_val_iou)
+        self.validation_outputs.clear()
+def main():
+    args=get_args()
+    with open(args.config_path) as f:
+        hparams=yaml.load(f,Loader=yaml.SafeLoader)
+    pipeline=SegmentPeople(hparams)
+    Path(hparams["checkpoint_callback"]["dirpath"]).mkdir(exist_ok=True,parents=True)
+    trainer=object_from_dict(
+        hparams["trainer"],
+        logger=WandbLogger(hparams["experiment_name"]),
+        callbacks=[object_from_dict(
+            hparams["checkpoint_callback"]
+        )]
+    )
+    trainer.fit(pipeline)
+if __name__=="__main__":
+    main()
 
         
 
