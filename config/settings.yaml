@@ -10,7 +10,7 @@ model:
   encoder_weights: null  # null = train from scratch, "noisy-student" = pretrained
 trainer:
   type: pytorch_lightning.Trainer
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   max_epochs: 70
   precision: "16-mixed"
