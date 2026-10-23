@@ -2,4 +2,10 @@
 models
 __pycache__
 .env
-src/__pycache__
+train
+train.csv 
+wandb
+imageProcessing
+settings
+processed
+prediction

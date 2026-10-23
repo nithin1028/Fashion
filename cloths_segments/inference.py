@@ -1,6 +1,3 @@
-from timm.data import loader
-from torch import device
-from torch.utils.tensorboard.summary import hparams
 import argparse
 from pathlib import Path
 from typing import Dict,List,Optional,Any
@@ -23,26 +20,28 @@ def get_args():
     parser=argparse.ArgumentParser()
     arg=parser.add_argument
     arg("-i","--input_path",type=Path,help="Path with images.",required=True)
-    arg("-c","--congif_path",type=Path,help="Path to config",required=True)
+    arg("-c","--config_path",type=Path,help="Path to config",required=True)
     arg("-o","--output_path",type=Path,help="Path to save Path",required=True)
-    arg("-b","--bath_size",type=int,help="Batch size",required=True)
+    arg("-b","--batch_size",type=int,help="Batch size",required=True)
     arg("-j","--num_workers",type=int,help="Path weight",required=True)
+    arg("-w", "--weight_path", type=str, help="Path to weights.", required=True)
     arg("--world_size",default=-1,type=int,help="number of nodes for distrubuted training")
     arg("--local_rank",default=-1,type=int,help="number of noder for distrubuted training")
-    arg("--fp16",action="store_ture",help="Use fp6")
+    arg("--fp16",action="store_true",help="Use fp6")
     return parser.parse_args()
 class InferenceDataset(Dataset):
     def __init__(self,file_paths:List[Path],transform:albu.Compose)->None:
         self.file_path=file_paths
         self.transform=transform
-    def __length__(self)->int:
+    def __len__(self)->int:
         return len(self.file_path)
-    def __getiteam__(self,idx:int)->Optional[Dict[str,Any]]:
+    def __getitem__(self,idx:int)->Optional[Dict[str,Any]]:
         image_path=self.file_path[idx]
         image=load_rgb(image_path)
-        height,width=image[:2]
+        height,width=image.shape[:2]
         image=self.transform(image=image)["image"]    
-        pad_dict=pad_to_size((max(image.shape[:2],max(image.shape[:2]))),image) 
+        max_dim = max(image.shape[:2])
+        pad_dict = pad_to_size((max_dim, max_dim), image)
         return{
                "torched_image":tensor_from_rgb_image(pad_dict["image"]),
                "image_path": str(image_path),
@@ -52,7 +51,7 @@ class InferenceDataset(Dataset):
         }
 def main():
         args=get_args()
-        torch.distributed.init_process_group(backend="'nccl")
+        ##torch.distributed.init_process_group(backend="'nccl")
         with open(args.config_path) as f :
             hparams=yaml.load(f,Loader=yaml.SafeLoader)
         hparams.update(
@@ -62,9 +61,9 @@ def main():
             }
         )
         output_mask_path=args.output_path
-        output_mask_path.mkdir(parents=True,exist_ok=True)
+        output_mask_path.mkdir(exist_ok=True,parents=True)
         hparams["output_mask_path"]=output_mask_path
-        device=torch.device("cuda",args.local_rank)
+        device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model=object_from_dict(hparams["model"])
         model=model.to(device)
         if args.fp16:
@@ -72,15 +71,15 @@ def main():
         correlation:Dict[str,str]={"model.":""}  
         state_dict=state_dict_from_disk(file_path=args.weight_path,rename_in_layers=correlation)
         model.load_state_dict(state_dict)
-        model=torch.nn.parallel.DistributedDataParallelCPU(
-             model,device_ids=[args.local_rank],output_device=args.local_rank
-        )
+        ##model=torch.nn.parallel.DistributedDataParallelCPU(
+        ##     model,device_ids=[args.local_rank],output_device=args.local_rank
+        ## )
         file_path=[]
         for regexp in ["*.jpg","*.jpeg","*.png","*.JPG"]:
             file_path+=sorted([x for x in tqdm(args.input_path.rglob(regexp))])  
-        file_path=[x for x in file_path if not (args.output_path/x.parent.name/f"{x.stem}.png").exist()] 
+        file_path=[x for x in file_path if not (args.output_path/x.parent.name/f"{x.stem}.png").exists()] 
         dataset=InferenceDataset(file_path,transform=from_dict(hparams["test_aug"]))
-        sampler=DistributedSampler(dataset,shuffle=False)
+        #sampler=DistributedSampler(dataset,shuffle=False)
         dataloder=torch.utils.data.DataLoader(
                   dataset,
                   batch_size=args.batch_size,
@@ -88,11 +87,11 @@ def main():
                   pin_memory=True,
                   shuffle=False,
                   drop_last=False,
-                  sampler=sampler
         )
+        predict(dataloder, model, hparams, device)        
 def predict(dataloder,model,hparams,device):
     model.eval()
-    if hparams["local_rank"]==0:
+    if hparams["local_rank"] in [0, -1]:
        loader=tqdm(dataloder)
     else :
        loader=dataloder
@@ -101,18 +100,18 @@ def predict(dataloder,model,hparams,device):
             torched_images=batch['torched_image']
             if hparams['fp16']:
                 torched_images=torched_images.half()
-            image_paths=batch["image_paths"]
+            image_paths=batch["image_path"]
             pads=batch["pads"]
             height=batch["original_height"]
             width=batch["original_width"]
-            batch_size=torched_images.shape
+            batch_size=torched_images.shape[0]
             predection=model(torched_images.to(device)) 
             for batch_id in range(batch_size):
                 file_id=Path(image_paths[batch_id]).stem
                 folder_name=Path(image_paths[batch_id]).parent.name
-                mask=(predection[batch_id][0].cpu().numpy()>0).astype(np.unit8)*255
+                mask=(predection[batch_id][0].cpu().numpy()>0).astype(np.uint8)*255
                 mask=unpad_from_size(pads,image=mask)["image"]
-                mask=cv2.resize(mask,(width[batch_id].item()),height[batch_id].item(),interpolation=cv2.INTER_NEAREST)
+                mask=cv2.resize(mask,(width[batch_id].item(),height[batch_id].item()),interpolation=cv2.INTER_NEAREST)
                 (hparams["output_mask_path"]/folder_name).mkdir(exist_ok=True,parents=True)   
                 cv2.imwrite(str(hparams["output_mask_path"]/folder_name/f"{file_id}.png"),mask) 
 if __name__=="__main__":

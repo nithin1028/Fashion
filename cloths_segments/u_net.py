@@ -12,7 +12,7 @@ model=namedtuple("model",["url","model"])
 models={
     "Unet_2020-10-30":model(
         url="https://github.com/ternaus/cloths_segmentation/releases/download/0.0.1/weights.zip",
-        model=Unet(encoder_name="timm-efficientnet-b3",classes=1,ecoder_weights=None)
+        model=Unet(encoder_name="timm-efficientnet-b3",classes=1,encoder_weights=None)
     )
 }
 def create_model(model_name:str)->nn.Module:

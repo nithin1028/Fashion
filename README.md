@@ -1,195 +1,247 @@
-<div align="center">
-
-# 👗 FashioNet
-
-### A Digital Trial Room powered by Computer Vision
-
-*Try before you wear: no crowded changing rooms, no discomfort, just you and your webcam.*
-
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![OpenCV](https://img.shields.io/badge/OpenCV-Latest-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-Latest-0097A7?style=for-the-badge&logo=google&logoColor=white)
+# FashionNet: Virtual Try-On
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-0097A7?style=for-the-badge&logo=google&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![CUDA](https://img.shields.io/badge/CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
+![YAML](https://img.shields.io/badge/YAML-CB171E?style=for-the-badge&logo=yaml&logoColor=white)
+FashionNet is a virtual try-on project built around a clothes segmentation model. Given an input image of a person, the model segments the clothing region and produces a mask that can be used in downstream virtual try-on pipelines. The repository provides a ready-to-use pre-built model for quick inference, along with a complete workflow for preparing a dataset and training a custom model.
+---
 
-</div>
+## Table of Contents
+
+1. [Technology Stack](#technology-stack)
+2. [Repository Branches](#repository-branches)
+3. [Project Structure](#project-structure)
+4. [Installation](#installation)
+5. [Quick Start: Run the Pre-Built Model](#quick-start-run-the-pre-built-model)
+6. [Training a Custom Model](#training-a-custom-model)
+   - [Step 1: Prepare the Dataset](#step-1-prepare-the-dataset)
+   - [Step 2: Train the Model](#step-2-train-the-model)
+   - [Step 3: Run Inference](#step-3-run-inference)
+7. [GPU and CPU Versions](#gpu-and-cpu-versions)
+8. [Requirements](#requirements)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 📖 Overview
+## Technology Stack
 
-Many people feel uncomfortable or insecure using physical trial rooms. **FashioNet** addresses this by moving the trial room onto your screen. Using a standard webcam, it detects your body, analyses your skin tone, recommends outfits that suit you, and lets you preview them with a virtual try-on.
-
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| 🧍 **Body Landmark Detection** | Real-time pose detection with MediaPipe on a live OpenCV webcam feed |
-| 📦 **Torso Bounding Box** | Draws a torso box from shoulder and hip landmarks for accurate clothing placement |
-| 🎨 **Skin Tone Analysis** | Estimates skin tone from the face region using OpenCV |
-| 👕 **Outfit Recommendation** | Suggests clothing colours and styles that match the detected skin tone |
-| 🪞 **Virtual Try-On** | Overlays the selected garment on the user in real time |
-
-## ⚙️ How It Works
-
-```
- Webcam (OpenCV)
-       │
-       ▼
- Pose & Face Detection (MediaPipe)
-       │
-       ▼
- Torso Bounding Box (accurate body region)
-       │
-       ▼
- Skin Tone Analysis (OpenCV)
-       │
-       ▼
- Dress Recommendation
-       │
-       ▼
- Virtual Try-On
-```
-
-1. **Capture**: OpenCV reads frames from the webcam.
-2. **Detect**: MediaPipe finds body and face landmarks.
-3. **Locate**: A torso box is drawn from the shoulder and hip points for precise detection.
-4. **Analyse**: OpenCV extracts the dominant skin tone.
-5. **Recommend**: Dresses are suggested based on the skin tone.
-6. **Try On**: The chosen outfit is overlaid on the live feed.
-
-## 🛠️ Tech Stack
-
-<div align="center">
-
-<img src="https://skillicons.dev/icons?i=python,opencv,numpy,pandas,git,github,vscode" alt="Tech stack icons" />
-
-</div>
-
-- **Python**: core language
-- **MediaPipe**: pose and face landmark detection
-- **OpenCV**: webcam capture, image processing, skin tone analysis, overlay
-- **NumPy / Pandas**: numerical operations and recommendation data handling
-
-## 📋 Requirements
-
-- Python **3.10 or later**
-- MediaPipe (latest)
-- OpenCV (latest)
-- A working webcam
-
-## 🚀 Installation
-
-**1. Clone the repository**
-
-```bash
-git clone https://github.com/nithin1028/Fashion.git
-cd Fashion
-```
-
-**2. (Recommended) Create a virtual environment**
-
-```bash
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-```
-
-**3. Install dependencies**
-
-```bash
-python -m pip install mediapipe
-python -m pip install opencv-python
-python -m pip install numpy pandas
-```
-
-> `pathlib` is part of the Python standard library, so it does not need to be installed with pip.
-
-## 📥 Download Models
-
-Model files are large, so they are listed in `.gitignore` and **not** stored in this repository. Download the ones you need and place them in a `models/` folder.
-
-| Model | Purpose | Download |
-|---|---|---|
-| Pose Landmarker | Body landmark detection | [Official models page](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker/index#models) |
-| Face Landmarker | Face detection for skin tone analysis | [Official models page](https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker/index#models) |
-
-Expected layout:
-
-```
-models/
-├── pose_landmarker.task
-└── face_landmarker.task
-```
-
-> Adjust the file names above to match the models you download and the paths used in your code.
-
-## ▶️ Usage
-
-```bash
-python main.py
-```
-
-- Stand in front of the webcam so your upper body is visible.
-- Wait for the torso box and landmarks to appear.
-- Review the skin tone analysis and recommended outfits.
-- Select an outfit to start the virtual try-on.
-- Press `q` to quit.
-
-> Replace `main.py` with your actual entry-point file name.
-
-## 📁 Project Structure
-
-```
-Fashion/
-├── models/            # Downloaded MediaPipe models (git-ignored)
-├── assets/            # Clothing images / overlays
-├── main.py            # Application entry point
-├── requirements.txt   # Python dependencies
-├── .gitignore
-└── README.md
-```
-
-> Update this tree to match your real folders and files.
-
-## 🗺️ Roadmap
-
-- [x] Body landmark detection with MediaPipe
-- [x] Torso bounding box
-- [x] Skin tone analysis
-- [x] Skin-tone-based dress recommendation
-- [x] Virtual try-on
-- [ ] Improved garment warping for different body poses
-- [ ] Larger clothing catalogue
-- [ ] Lighting-aware skin tone correction
-- [ ] Web or mobile interface
-
-## 🤝 Contributing
-
-Contributions are welcome.
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "Add your feature"`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the **MIT License**. Add a `LICENSE` file to the repository, or change this section if you use a different license.
-
-## 🙏 Acknowledgements
-
-- [MediaPipe](https://developers.google.com/mediapipe) by Google
-- [OpenCV](https://opencv.org/)
+| Technology | Logo | Purpose |
+|------------|------|---------|
+| Python | <img src="https://cdn.simpleicons.org/python" alt="Python" height="32"> | Core programming language for the entire project |
+| PyTorch | <img src="https://cdn.simpleicons.org/pytorch" alt="PyTorch" height="32"> | Model definition, training, and inference |
+| OpenCV | <img src="https://cdn.simpleicons.org/opencv" alt="OpenCV" height="32"> | Image reading, resizing, and mask processing |
+| MediaPipe | <img src="https://cdn.simpleicons.org/google" alt="MediaPipe" height="32"> | Pose and landmark detection for person-aware image processing |
+| NumPy | <img src="https://cdn.simpleicons.org/numpy" alt="NumPy" height="32"> | Numerical operations on image arrays |
+| Pandas | <img src="https://cdn.simpleicons.org/pandas" alt="Pandas" height="32"> | Reading and handling CSV annotation and label files |
+| CUDA | <img src="https://cdn.simpleicons.org/nvidia" alt="CUDA" height="32"> | GPU acceleration for training and inference (GPU version) |
+| YAML | <img src="https://cdn.simpleicons.org/yaml" alt="YAML" height="32"> | Configuration files for training and inference settings |
 
 ---
 
-<div align="center">
+## Repository Branches
 
-⭐ If you find this project useful, please consider giving it a star!
+| Branch             | Description                                                                 |
+|--------------------|-----------------------------------------------------------------------------|
+| `main`             | Primary branch for systems with a GPU. Contains the pre-built model code.   |
+| `main-cpu`         | CPU-only version for systems without a GPU.                                 |
+| `image-processing` | Dataset preparation scripts used to generate image and mask pairs.          |
 
-</div>
+The commands are the same for the GPU and CPU versions. The differences lie in the YAML configuration files and a few hardware-specific settings.
+
+---
+
+## Project Structure
+
+```
+FashionNet/
+|-- cloths_segmentation/
+|   |-- run.py            # Quick inference using the pre-built model
+|   |-- train.py          # Model training entry point
+|   |-- inference.py      # Batch inference with custom weights
+|   |-- ...
+|-- ImageProcessing/      # Available on the image-processing branch
+|   |-- dataset.py        # Dataset preparation (image and mask separation)
+|-- requirements.txt
+|-- README.md
+```
+
+The structure above is indicative. Refer to the repository for the exact file layout of each branch.
+
+---
+
+## Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone <repository-url>
+   cd FashionNet
+   ```
+
+2. Select the branch that matches your hardware:
+
+   ```bash
+   # System with GPU
+   git checkout main
+
+   # System without GPU
+   git checkout main-cpu
+   ```
+
+3. Create and activate a virtual environment (recommended):
+
+   ```bash
+   python -m venv venv
+
+   # Linux / macOS
+   source venv/bin/activate
+
+   # Windows
+   venv\Scripts\activate
+   ```
+
+4. Install the dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   If a `requirements.txt` file is not available, install the core libraries manually:
+
+   ```bash
+   pip install numpy pandas opencv-python mediapipe torch torchvision
+   ```
+
+---
+
+## Quick Start: Run the Pre-Built Model
+
+Use this option to run the existing model on an input image without any training.
+
+1. Clone the repository and check out the correct branch (see [Installation](#installation)).
+2. Place your input image in the location expected by the script.
+3. Run the following command:
+
+   ```bash
+   python cloths_segements/run.py
+   ```
+
+The script processes the given input image and displays or saves the output result.
+
+---
+
+## Training a Custom Model
+
+To train your own model, you first need image and mask pairs. The dataset preparation code is located on a separate branch.
+
+### Step 1: Prepare the Dataset
+
+1. Download a clothing segmentation dataset from Kaggle.
+2. Switch to the image processing branch:
+
+   ```bash
+   git checkout image-processing
+   ```
+
+3. Run the dataset preparation script. Make sure all paths are correct before running the command.Before run give path in `run_dataset.sh` file then run commad 
+  ```bash
+      bash run_dataset.sh
+  ```
+
+   | Argument | Description                                               |
+   |----------|-----------------------------------------------------------|
+   | `-i`     | Path to the downloaded dataset images                     |
+   | `-l`     | Path to the CSV file containing the labels                |
+   | `-o`     | Output directory for the processed images and masks       |
+
+The script separates the original images from their corresponding mask images based on the dataset. The output directory will contain the data required for training.
+
+### Step 2: Train the Model
+
+Return to the main branch that matches your hardware (`main` for GPU, `main-cpu` for CPU), then start training with your prepared data:
+
+```bash
+python -m cloths_segmentation.train -c <path to config>
+```
+
+| Argument | Description                                       |
+|----------|---------------------------------------------------|
+| `-c`     | Path to the YAML configuration file for training  |
+
+Update the dataset paths, batch size, number of epochs, and other settings in the configuration file before training.
+
+### Step 3: Run Inference
+
+After training, run inference on new images using the trained weights:
+
+```bash
+python -m torch.distributed.launch --nproc_per_node=<num_gpu> cloths_segmentation/inference.py \
+    -i <path to images> \
+    -c <path to config> \
+    -w <path to weights> \
+    -o <output path> \
+    --fp16
+```
+
+| Argument            | Description                                           |
+|---------------------|-------------------------------------------------------|
+| `--nproc_per_node`  | Number of GPUs to use                                 |
+| `-i`                | Path to the input images                              |
+| `-c`                | Path to the configuration file                        |
+| `-w`                | Path to the trained model weights                     |
+| `-o`                | Directory where the output masks will be saved        |
+| `--fp16`            | Enables half-precision inference (GPU only)           |
+
+---
+
+## GPU and CPU Versions
+
+| Aspect              | `main` (GPU)                         | `main-cpu` (CPU)                       |
+|---------------------|--------------------------------------|----------------------------------------|
+| Hardware            | NVIDIA GPU with CUDA                 | Any system without a GPU               |
+| Commands            | Same as listed in this document      | Same as listed in this document        |
+| YAML configuration  | GPU-specific settings                | CPU-specific settings                  |
+| Performance         | Faster training and inference        | Slower, suitable for testing and demos |
+
+Notes for CPU users:
+
+- Use the configuration files provided on the `main-cpu` branch.
+- Half-precision inference (`--fp16`) and multi-GPU launch options apply only to GPU systems. Adjust the inference command according to the instructions on the `main-cpu` branch.
+
+---
+
+## Requirements
+
+- Python 3.8 or later
+- PyTorch (CUDA-enabled build recommended for the GPU version)
+- OpenCV
+- MediaPipe
+- NumPy
+- Pandas
+- NVIDIA GPU with CUDA support (GPU version only)
+- A clothing segmentation dataset from Kaggle (required only for custom training)
+
+---
+
+## Troubleshooting
+
+| Issue                                   | Suggested Solution                                                              |
+|-----------------------------------------|---------------------------------------------------------------------------------|
+| `ModuleNotFoundError`                   | Ensure the virtual environment is active and all dependencies are installed.    |
+| File or path not found                  | Verify that the dataset, CSV, config, and weights paths are correct.            |
+| CUDA out of memory                      | Reduce the batch size in the configuration file or use the CPU branch.          |
+| Script not found on current branch      | Confirm you are on the correct branch (`main`, `main-cpu`, or `image-processing`). |
+
+---
+
+## License
+
+Specify the project license here.
+
+## Contact
+
+For questions or contributions, please open an issue in the repository or contact the project maintainers.
