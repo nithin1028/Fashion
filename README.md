@@ -1,5 +1,4 @@
 # FashionNet: Virtual Try-On
-
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
@@ -8,9 +7,7 @@
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![CUDA](https://img.shields.io/badge/CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![YAML](https://img.shields.io/badge/YAML-CB171E?style=for-the-badge&logo=yaml&logoColor=white)
-
 FashionNet is a virtual try-on project built around a clothes segmentation model. Given an input image of a person, the model segments the clothing region and produces a mask that can be used in downstream virtual try-on pipelines. The repository provides a ready-to-use pre-built model for quick inference, along with a complete workflow for preparing a dataset and training a custom model.
-
 ---
 
 ## Table of Contents
