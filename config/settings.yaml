@@ -18,8 +18,8 @@ trainer:
   gradient_clip_val: 5.0
   num_sanity_val_steps: 0
   sync_batchnorm: False
-  limit_train_batches: 50   # Train on only 50 batches per epoch (50 x batch_size images)
-  limit_val_batches: 10     # Validate on only 10 batches per epoch
+  limit_train_batches: 50  
+  limit_val_batches: 10     
 scheduler:
   type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
   T_0: 10
@@ -54,7 +54,7 @@ train_aug:
         always_apply: False
         min_height: 800
         min_width: 800
-        border_mode: 0 # cv2.BORDER_CONSTANT
+        border_mode: 0 
         value: 0
         mask_value: 0
         p: 1
@@ -93,7 +93,7 @@ val_aug:
         always_apply: False
         min_height: 800
         min_width: 800
-        border_mode: 0 # cv2.BORDER_CONSTANT
+        border_mode: 0
         value: 0
         mask_value: 0
         p: 1

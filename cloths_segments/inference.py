@@ -91,7 +91,7 @@ def main():
         predict(dataloder, model, hparams, device)        
 def predict(dataloder,model,hparams,device):
     model.eval()
-    if hparams["local_rank"]==0:
+    if hparams["local_rank"] in [0, -1]:
        loader=tqdm(dataloder)
     else :
        loader=dataloder

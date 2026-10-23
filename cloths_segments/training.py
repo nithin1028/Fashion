@@ -72,11 +72,12 @@ class SegmentPeople(pl.LightningModule):
         result=DataLoader(
                SegmenatationDataset(self.val_samples,val_aug,length=None),
                batch_size=self.hparams["val_parameters"]["batch_size"],
-               shuffle=True,
+               num_workers=self.hparams["num_workers"],
+               shuffle=False,
                pin_memory=True,
-               drop_last=True
+               drop_last=False
         ) 
-        print("Train dataloder=",len(result))
+        print("Val dataloder=",len(result))
         return result  
     def configure_optimizers(self):
         optimiser=object_from_dict(
