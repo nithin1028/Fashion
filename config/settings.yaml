@@ -1,6 +1,6 @@
 ---
 seed: 1984
-num_workers: 4
+num_workers: 0
 experiment_name: "2020-10-30"
 val_split: 0.1
 model:
@@ -10,20 +10,22 @@ model:
   encoder_weights: null  # null = train from scratch, "noisy-student" = pretrained
 trainer:
   type: pytorch_lightning.Trainer
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
-  max_epochs: 70
-  precision: "16-mixed"
+  max_epochs: 5
+  precision: "32-true"
   benchmark: True
   gradient_clip_val: 5.0
-  num_sanity_val_steps: 2
-  sync_batchnorm: True
+  num_sanity_val_steps: 0
+  sync_batchnorm: False
+  limit_train_batches: 50  
+  limit_val_batches: 10     
 scheduler:
   type: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
   T_0: 10
   T_mult: 2
 train_parameters:
-  batch_size: 8
+  batch_size: 2
 checkpoint_callback:
   type: pytorch_lightning.callbacks.ModelCheckpoint
   dirpath: "settings"
@@ -52,7 +54,7 @@ train_aug:
         always_apply: False
         min_height: 800
         min_width: 800
-        border_mode: 0 # cv2.BORDER_CONSTANT
+        border_mode: 0 
         value: 0
         mask_value: 0
         p: 1
@@ -91,7 +93,7 @@ val_aug:
         always_apply: False
         min_height: 800
         min_width: 800
-        border_mode: 0 # cv2.BORDER_CONSTANT
+        border_mode: 0
         value: 0
         mask_value: 0
         p: 1

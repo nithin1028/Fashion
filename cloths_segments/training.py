@@ -17,7 +17,6 @@ from torch.utils.data import DataLoader
 from cloths_segments.data_process import SegmenatationDataset
 from cloths_segments.metrics_score import binary_mean_union_intersection
 from cloths_segments.utils import get_samples
-
 image_path=Path(os.environ["IMAGE_PATH"])
 mask_path=Path(os.environ["MASK_PATH"])
 def get_args():
@@ -73,11 +72,12 @@ class SegmentPeople(pl.LightningModule):
         result=DataLoader(
                SegmenatationDataset(self.val_samples,val_aug,length=None),
                batch_size=self.hparams["val_parameters"]["batch_size"],
-               shuffle=True,
+               num_workers=self.hparams["num_workers"],
+               shuffle=False,
                pin_memory=True,
-               drop_last=True
+               drop_last=False
         ) 
-        print("Train dataloder=",len(result))
+        print("Val dataloder=",len(result))
         return result  
     def configure_optimizers(self):
         optimiser=object_from_dict(
@@ -106,7 +106,7 @@ class SegmentPeople(pl.LightningModule):
         return {"loss":total_loss,"log":logs}
     def _get_current_lr(self):
         lr=[x["lr"] for x in self.optimiser[0].param_groups][0]
-        return torch.Tensor([lr])[0].cuda()
+        return lr
     def validation_step(self,batch,batch_id):
         features=batch["features"]
         mask=batch["mask"]

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List,Dict,Any,Tuple
 import albumentations as albu 
 from iglovikov_helper_functions.utils.image_utils import load_grayscale,load_rgb
-from pytorch_toolbelt.utils.torch_utils import tensor_from_rgb_image 
+from pytorch_toolbelt.utils.torch_utils import image_to_tensor
 from torch.utils.data import Dataset
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ class SegmenatationDataset(Dataset):
         mask=torch.from_numpy(mask)
         return{
             "image_id":image_path.stem,
-            "features":tensor_from_rgb_image(image),
+            "features":image_to_tensor(image),
             "mask":torch.unsqueeze(mask,0).float()  
         }        
 
