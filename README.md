@@ -8,8 +8,9 @@
 ![CUDA](https://img.shields.io/badge/CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![YAML](https://img.shields.io/badge/YAML-CB171E?style=for-the-badge&logo=yaml&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-   ---
+<p>
       FashionNet is a virtual try-on project built around a clothes segmentation model. Given an input image of a person, the model segments the clothing region and produces a mask that can be used in downstream virtual try-on pipelines. The repository provides a ready-to-use pre-built model for quick inference, along with a complete workflow for preparing a dataset and training a custom model.
+</p>     
 ## Table of Contents
 
 1. [Technology Stack](#technology-stack)
