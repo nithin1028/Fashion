@@ -5,23 +5,11 @@
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-0097A7?style=for-the-badge&logo=google&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
-<<<<<<< Updated upstream
+<<<<
 ![CUDA](https://img.shields.io/badge/CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![YAML](https://img.shields.io/badge/YAML-CB171E?style=for-the-badge&logo=yaml&logoColor=white)
 FashionNet is a virtual try-on project built around a clothes segmentation model. Given an input image of a person, the model segments the clothing region and produces a mask that can be used in downstream virtual try-on pipelines. The repository provides a ready-to-use pre-built model for quick inference, along with a complete workflow for preparing a dataset and training a custom model.
----
-=======
-<<<<<<< Updated upstream
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-=======
-![CUDA](https://img.shields.io/badge/CUDA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
-![YAML](https://img.shields.io/badge/YAML-CB171E?style=for-the-badge&logo=yaml&logoColor=white)
-
-FashionNet is a virtual try-on project built around a clothes segmentation model. Given an input image of a person, the model segments the clothing region and produces a mask that can be used in downstream virtual try-on pipelines. The repository provides a ready-to-use pre-built model for quick inference, along with a complete workflow for preparing a dataset and training a custom model.
----
->>>>>>> Stashed changes
->>>>>>> Stashed changes
-
 ## Table of Contents
 
 1. [Technology Stack](#technology-stack)
@@ -249,11 +237,3 @@ Notes for CPU users:
 | Script not found on current branch      | Confirm you are on the correct branch (`main`, `main-cpu`, or `image-processing`). |
 
 ---
-
-## License
-
-Specify the project license here.
-
-## Contact
-
-For questions or contributions, please open an issue in the repository or contact the project maintainers.
