@@ -59,7 +59,6 @@ class FeatureExtraction(nn.Module):
             init_weight(self.model,init_type='normal')
     def forward(self,x):
         return self.model(x)
-class FeatureCorelation(nn.Module):
 
 
 
