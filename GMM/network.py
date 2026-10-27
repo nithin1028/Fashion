@@ -43,23 +43,7 @@ def init_weight(net,init_type='normal'):
         net.apply(weight_init_kaiming)
     else :
         raise NotImplementedError("Initailsation Methos is not implemented[%s]"%init_type)
-class FeatureExtraction(nn.Module):
-    def __init__(self,input_nc=3,out_channels=64,n_layers=3,norm_layers=nn.BatchNorm2d,use_dropout=False):
-          super(FeatureExtraction,self).__init__()
-          model=[nn.Conv2d(in_channels=3,out_channels=64,kernel_size=4,stride=2,padding=1),nn.ReLU(inplace=True),norm_layers(out_channels)]
-          for i in range(n_layers):
-            in_ngf=2**i*out_channels if 2**i*out_channels<512 else 512 
-            out_ngf=2**i**out_channels if 2**i*out_channels else 512
-            model+=[nn.Conv2d(in_ngf,out_ngf,kernel_size=4,stride=2,padding=1),nn.ReLU(inplace=True)]
-            model+=[norm_layers(out_ngf)]
-            model+=[nn.Conv2d(512,512,kernel_size=4,stride=2,padding=1),nn.ReLU(inplace=True)]
-            model+=[norm_layers(512)]
-            model+=[nn.Conv2d(512,512,kernel_size=4,stride=2,padding=1)]
-            self.model=nn.Sequential(*model)
-            init_weight(self.model,init_type='normal')
-    def forward(self,x):
-        return self.model(x)
-class FeatureCorelation(nn.Module):
+
 
 
 
