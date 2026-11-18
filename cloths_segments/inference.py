@@ -23,7 +23,7 @@ def get_args():
     arg("-c","--config_path",type=Path,help="Path to config",required=True)
     arg("-o","--output_path",type=Path,help="Path to save Path",required=True)
     arg("-b","--batch_size",type=int,help="Batch size",required=True)
-    arg("-j","--num_workers",type=int,help="Path weight",required=True)
+    arg("-j","--num_workers",type=int,help="Number of dataloader workers",required=True)
     arg("-w", "--weight_path", type=str, help="Path to weights.", required=True)
     arg("--world_size",default=-1,type=int,help="number of nodes for distrubuted training")
     arg("--local_rank",default=-1,type=int,help="number of noder for distrubuted training")
