@@ -20,7 +20,7 @@ from cloths_segments.metrics_score import binary_mean_union_intersection
 from cloths_segments.utils import get_samples
 #no .env on SageMaker -> fall back to the channel paths instead of raising KeyError at import
 image_path=Path(os.environ.get("IMAGE_PATH","/opt/ml/input/data/training/images"))
-mask_path=Path(os.environ.get("MASK_PATH","/opt/ml/input/data/training/masks"))
+mask_path=Path(os.environ.get("MASK_PATH","/opt/ml/input/data/training/labels"))
 def get_args():
     parser=argparse.ArgumentParser()
     arg=parser.add_argument
