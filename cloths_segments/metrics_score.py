@@ -1,4 +1,3 @@
-from unittest import result
 import torch
 EPSILON=1e-15
 def binary_mean_union_intersection(logits:torch.Tensor,targets:torch.Tensor)->torch.Tensor:

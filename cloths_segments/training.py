@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 from dotenv import load_dotenv
 load_dotenv()
 from pathlib import Path
@@ -17,8 +18,9 @@ from torch.utils.data import DataLoader
 from cloths_segments.data_process import SegmenatationDataset
 from cloths_segments.metrics_score import binary_mean_union_intersection
 from cloths_segments.utils import get_samples
-image_path=Path(os.environ["IMAGE_PATH"])
-mask_path=Path(os.environ["MASK_PATH"])
+#no .env on SageMaker -> fall back to the channel paths instead of raising KeyError at import
+image_path=Path(os.environ.get("IMAGE_PATH","/opt/ml/input/data/training/images"))
+mask_path=Path(os.environ.get("MASK_PATH","/opt/ml/input/data/training/labels"))
 def get_args():
     parser=argparse.ArgumentParser()
     arg=parser.add_argument
@@ -100,10 +102,13 @@ class SegmentPeople(pl.LightningModule):
         for loss_name,weight,loss in self.losses:
             ls_mask=loss(logits,masks)
             total_loss+=weight*ls_mask
-            logs[f"train_loss_{loss_name}"]=total_loss
+            logs[f"train_loss_{loss_name}"]=ls_mask
         logs["train_loss"]=total_loss
         logs["lr"]=self._get_current_lr()
-        return {"loss":total_loss,"log":logs}
+        #PL 2.x ignores the "log" key of the returned dict -> log explicitly
+        for key,value in logs.items():
+            self.log(key,value,on_step=False,on_epoch=True,prog_bar=(key in ("train_loss","lr")))
+        return {"loss":total_loss}
     def _get_current_lr(self):
         lr=[x["lr"] for x in self.optimiser[0].param_groups][0]
         return lr
@@ -118,14 +123,15 @@ class SegmentPeople(pl.LightningModule):
         self.validation_outputs.append(result)
         return result
     def on_validation_epoch_end(self):
-        logs={"epoch":self.trainer.current_epoch}  
         avg_val_iou=find_average(self.validation_outputs,"val_iou")
-        self.log("val_iou",avg_val_iou)
+        self.log("val_iou",avg_val_iou,prog_bar=True)
         self.validation_outputs.clear()
 def main():
     args=get_args()
     with open(args.config_path) as f:
         hparams=yaml.load(f,Loader=yaml.SafeLoader)
+    #no wandb API key inside the training container -> run offline instead of hanging
+    os.environ.setdefault("WANDB_MODE","offline")
     pipeline=SegmentPeople(hparams)
     Path(hparams["checkpoint_callback"]["dirpath"]).mkdir(exist_ok=True,parents=True)
     trainer=object_from_dict(
@@ -136,10 +142,14 @@ def main():
         )]
     )
     trainer.fit(pipeline)
+    #anything left in /opt/ml/model is tarred into model.tar.gz and uploaded to S3
+    best=trainer.checkpoint_callback.best_model_path
+    if best:
+        model_dir=Path(os.environ.get("SM_MODEL_DIR","/opt/ml/model"))
+        model_dir.mkdir(parents=True,exist_ok=True)
+        shutil.copy(best,model_dir/"best.ckpt")
+        print(f"saved {model_dir/'best.ckpt'} from {best}")
+    else:
+        print("WARNING: no best checkpoint found, nothing was copied to /opt/ml/model")
 if __name__=="__main__":
     main()
-
-        
-
-
-     
