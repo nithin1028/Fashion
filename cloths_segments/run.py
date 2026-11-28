@@ -12,16 +12,12 @@ from segmentation_models_pytorch import Unet
 from iglovikov_helper_functions.utils.image_utils import load_rgb
 from iglovikov_helper_functions.dl.pytorch.utils import tensor_from_rgb_image, rename_layers
 load_dotenv()
-
 HERE = Path(__file__).resolve().parent
 #checkpoint produced by training.py (/opt/ml/model/best.ckpt after download)
-WEIGHTS = Path(os.environ.get("WEIGHTS_PATH", HERE.parent / "best.ckpt"))
-IMAGE = Path(os.environ.get("TEST_IMAGE_PATH", HERE / "Bg.jpeg"))
+WEIGHTS = Path(os.environ.get("WEIGHTS_PATH", HERE.parent /"model/best.ckpt"))
+IMAGE = Path(os.environ.get("TEST_IMAGE_PATH", HERE /"Bg.jpeg"))
 OUT_DIR = HERE.parent / "predictions"
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
 def load_model(ckpt_path: Path) -> torch.nn.Module:
     model = Unet(encoder_name="timm-efficientnet-b3", classes=1, encoder_weights=None)
     checkpoint = torch.load(ckpt_path, map_location="cpu")
@@ -30,8 +26,6 @@ def load_model(ckpt_path: Path) -> torch.nn.Module:
     state_dict = rename_layers(state_dict, {"model.": ""})
     model.load_state_dict(state_dict)
     return model.to(device).eval()
-
-
 #must match val_aug / test_aug in config/settings.yaml
 transform = albu.Compose([
     albu.LongestMaxSize(max_size=800, p=1),
@@ -50,19 +44,15 @@ transform = albu.Compose([
         p=1,
     ),
 ], p=1)
-
-
-def predict(model: torch.nn.Module, image: np.ndarray) -> np.ndarray:
+def predict(model: torch.nn.Module, image: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     height, width = image.shape[:2]
     tensor = tensor_from_rgb_image(transform(image=image)["image"])
     tensor = torch.unsqueeze(tensor, 0).to(device)
     with torch.no_grad():
         logits = model(tensor)[0][0]
-    mask = (torch.sigmoid(logits) > 0.5).cpu().numpy().astype(np.uint8)
+    mask = (torch.sigmoid(logits) > threshold).cpu().numpy().astype(np.uint8)
     #network runs on the padded 800x800 canvas -> back to the original size
     return cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST)
-
-
 if __name__ == "__main__":
     if not WEIGHTS.exists():
         raise FileNotFoundError(
@@ -71,13 +61,17 @@ if __name__ == "__main__":
         )
     model = load_model(WEIGHTS)
     image = load_rgb(IMAGE)
-    mask = predict(model, image)
-
+    mask = predict(model, image, threshold=0.30)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
+    if n > 1:
+        largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+        mask = (labels == largest).astype(np.uint8)
     overlay = image.copy()
     overlay[mask == 1] = (
         0.5 * image[mask == 1] + 0.5 * np.array([0, 255, 0], dtype=np.float32)
     ).astype(np.uint8)
-
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     plt.imsave(OUT_DIR / "mask.png", mask * 255, cmap="gray")
     plt.imsave(OUT_DIR / "overlay.png", overlay)

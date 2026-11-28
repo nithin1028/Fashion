@@ -1,6 +1,6 @@
 .venv
 models
-__pycache__
+cloths_segments/__pycache__
 .env
 train
 train.csv 
@@ -9,3 +9,5 @@ imageProcessing
 settings
 processed
 prediction
+models
+predictions
